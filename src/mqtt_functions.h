@@ -9,14 +9,12 @@
 
 // Топики MQTT
 const char *curtains_topic = "MyRoom/curtains";
-const char *curtains_topic_position = "MyRoom/curtains/position";
+// const char *curtains_topic_position = "MyRoom/curtains/position";
 const char *curtains_topic_direction = "MyRoom/curtains/direction";
 const char *curtains_topic_mode = "MyRoom/curtains/mode";
 const char *curtains_topic_opening = "MyRoom/curtains/opening";
-const char *curtains_topic_open = "MyRoom/curtains/open";
-const char *curtains_topic_close = "MyRoom/curtains/close";
-
-// const char led = 2;
+// const char *curtains_topic_open = "MyRoom/curtains/open";
+// const char *curtains_topic_close = "MyRoom/curtains/close";
 
 // Настройки подключения к Wi-Fi и MQTT серверу
 const char *ssid = "DF_";
@@ -55,7 +53,7 @@ void reconnect()
       client.subscribe(curtains_topic_direction);
       client.subscribe(curtains_topic_mode);
       client.subscribe(curtains_topic_opening);
-      client.subscribe(curtains_topic_position);
+      // client.subscribe(curtains_topic_position);
       // client.subscribe(curtains_topic_close);
     }
     else
@@ -73,23 +71,23 @@ void callback(char *topic, byte *payload, unsigned int length)
   Serial.print(" => ");
   Serial.println(msg); // чтение данных
 
-  if (strcmp(topic, curtains_topic) == 0)
+  if (strcmp(topic, curtains_topic) == 0) // Обнуление
   {
     if (msg.toInt() == 1)
     {
       if (!firstStart)
       {
-        stepper.setCurrent(0);
+        stepper.reset();
         client.publish(curtains_topic, "0");
         client.publish(curtains_topic_opening, "0");
       }
     }
   }
-  else if (strcmp(topic, curtains_topic_direction) == 0)
+  else if (strcmp(topic, curtains_topic_direction) == 0) // Смена направления
   {
     stepper.reverse(msg.toInt());
   }
-  else if (strcmp(topic, curtains_topic_opening) == 0)
+  else if (strcmp(topic, curtains_topic_opening) == 0) // Открытие-вращение
   {
     int targetPosition = msg.toInt();
     if (firstStart)
@@ -100,9 +98,11 @@ void callback(char *topic, byte *payload, unsigned int length)
     }
     else
     {
+      should_be_measured = true;
+      period_measure = 200;
       stepper.setTarget(targetPosition);
-      timerAlarmWrite(My_timer, stepper.getPeriod(), true);
-      timerStart(My_timer);
+      timerAlarmWrite(step_timer, stepper.getPeriod(), true);
+      timerStart(step_timer);
     }
   }
   else if (strcmp(topic, curtains_topic_mode) == 0) // Режимы 1 - нормальный, 2 - медленный, 3 - быстрый
@@ -121,6 +121,15 @@ void callback(char *topic, byte *payload, unsigned int length)
     {
       stepper.setMaxSpeed(30000);     // скорость движения к цели
       stepper.setAcceleration(30000); // ускорение
+    }
+    else if (msg.toInt() == 4)
+    {
+      // stepper.enable();
+      stepper.setSpeed(20000);
+      should_be_measured = true;
+      period_measure = stepper.getPeriod() * 10;
+      timerAlarmWrite(step_timer, stepper.getPeriod(), true);
+      timerStart(step_timer);
     }
   }
 }

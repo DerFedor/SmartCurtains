@@ -3,12 +3,19 @@
 
 void setup()
 {
+  Wire.begin(I2C_SDA, I2C_SCL); // define which pins used for i2c
   Serial.begin(115200);
+  sensor219.begin();
 
-  My_timer = timerBegin(0, 80, true);
-  timerAttachInterrupt(My_timer, &onTimer, true);
-  timerAlarmWrite(My_timer, stepper.getPeriod(), true);
-  timerAlarmEnable(My_timer); // Just Enable
+  // power_timer = timerBegin(3, 80, true);               // таймер для для датчика тока
+  // timerAttachInterrupt(power_timer, &onSensTimer, true);
+  // timerAlarmWrite(power_timer, 1000000, true);
+  // timerAlarmEnable(power_timer); // Just Enable
+
+  step_timer = timerBegin(0, 80, true); // таймер для шаговика
+  timerAttachInterrupt(step_timer, &onTimer, true);
+  timerAlarmWrite(step_timer, stepper.getPeriod(), true);
+  timerAlarmEnable(step_timer); // Just Enable
 
   setup_wifi();
 
@@ -33,6 +40,18 @@ void loop()
   }
   client.loop();
 
+  if ((millis() - sens_timing > period_measure) && should_be_measured)
+  { // Вместо 10000 подставьте нужное вам значение паузы
+    sens_timing = millis();
+    onSensTimer();
+    // Serial.println("measure_curent_ ");
+  }
+
+  if (stepper.ready())
+  {
+    should_be_measured = false;
+  }
+
   // static uint32_t tmr;
   // if (millis() - tmr >= 30)
   // {
@@ -46,4 +65,22 @@ void loop()
   //   client.publish(curtains_topic_position, (char *)stepper.getCurrent());
   //   sent = true;
   // }
+}
+
+void onSensTimer()
+{
+  // буду замерять ток и напряжение
+  busVoltage = sensor219.getBusVoltage_V();
+  current = sensor219.getCurrent_mA();
+  power = busVoltage * (current / 1000); // Calculate the Power
+  // Serial.print("Current:       ");
+  // Serial.print(current);
+  // Serial.println(" mA");
+  if (current > 600)
+  {
+    Serial.println("Warning!!!");
+    stepper.brake();
+    stepper.reset();
+    should_be_measured = false;
+  }
 }
