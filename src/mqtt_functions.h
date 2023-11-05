@@ -77,6 +77,7 @@ void callback(char *topic, byte *payload, unsigned int length)
     {
       if (!firstStart)
       {
+        stepper.brake();
         stepper.reset();
         client.publish(curtains_topic, "0");
         client.publish(curtains_topic_opening, "0");
@@ -98,8 +99,8 @@ void callback(char *topic, byte *payload, unsigned int length)
     }
     else
     {
-      should_be_measured = true;
-      period_measure = 200;
+      // should_be_measured = true;
+      // period_measure = 200;
       stepper.setTarget(targetPosition);
       timerAlarmWrite(step_timer, stepper.getPeriod(), true);
       timerStart(step_timer);
@@ -109,13 +110,13 @@ void callback(char *topic, byte *payload, unsigned int length)
   {
     if (msg.toInt() == 1)
     {
-      stepper.setMaxSpeed(20000);     // скорость движения к цели
-      stepper.setAcceleration(20000); // ускорение
+      stepper.setMaxSpeed(10000);     // скорость движения к цели
+      stepper.setAcceleration(10000); // ускорение
     }
     else if (msg.toInt() == 2)
     {
-      stepper.setMaxSpeed(10000);     // скорость движения к цели
-      stepper.setAcceleration(10000); // ускорение
+      stepper.setMaxSpeed(20000);     // скорость движения к цели
+      stepper.setAcceleration(20000); // ускорение
     }
     else if (msg.toInt() == 3)
     {
@@ -124,10 +125,10 @@ void callback(char *topic, byte *payload, unsigned int length)
     }
     else if (msg.toInt() == 4)
     {
-      // stepper.enable();
-      stepper.setSpeed(20000);
+      stepper.enable();
+      stepper.setSpeed(10000);
       should_be_measured = true;
-      period_measure = stepper.getPeriod() * 10;
+      period_measure = 200;
       timerAlarmWrite(step_timer, stepper.getPeriod(), true);
       timerStart(step_timer);
     }

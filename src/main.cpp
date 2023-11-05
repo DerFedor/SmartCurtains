@@ -25,6 +25,7 @@ void setup()
 
   // stepper.invertEn(true);
   stepper.autoPower(true);
+  stepper.disable();
 
   stepper.setMaxSpeed(Speed);            // скорость движения к цели
   stepper.setAcceleration(Acceleration); // ускорение
@@ -76,11 +77,12 @@ void onSensTimer()
   // Serial.print("Current:       ");
   // Serial.print(current);
   // Serial.println(" mA");
-  if (current > 600)
+  if (current > 500)
   {
     Serial.println("Warning!!!");
     stepper.brake();
     stepper.reset();
     should_be_measured = false;
+    client.publish(curtains_topic_opening, "0");
   }
 }
