@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include "mqtt_functions.h"
+// AsyncWebServer server(80);
 
 void setup()
 {
@@ -18,6 +19,7 @@ void setup()
   timerAlarmEnable(step_timer); // Just Enable
 
   setup_wifi();
+  setup_OTA();
 
   // Настройка клиента MQTT
   client.setServer(mqtt_server, mqtt_port);
@@ -34,6 +36,7 @@ void setup()
 
 void loop()
 {
+  ArduinoOTA.handle();
   // Проверка подключения к MQTT серверу
   if (!client.connected())
   {
